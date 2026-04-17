@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proverbs31 Underwrite - Prototype</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --bg:#eef2f7;
+      --panel:#ffffff;
+      --panel-2:#f7f9fc;
+      --line:#d9e0ea;
+      --text:#253047;
+      --muted:#7a879d;
+      --nav:#0f1a36;
+      --nav-2:#1f2d57;
+      --primary:#1f2d57;
+      --primary-2:#2c3e73;
+      --green:#67c16f;
+      --green-bg:#e6f4e9;
+      --amber:#d39a32;
+      --amber-bg:#f7efdf;
+      --purple:#7f67e8;
+      --purple-bg:#ebe7fb;
+      --blue:#6d89f5;
+      --blue-bg:#e8edff;
+      --red:#dd655c;
+      --radius:20px;
+      --shadow:0 1px 0 rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;background:var(--bg);color:var(--text)}
+    button,input,select,textarea{font:inherit}
+    .app{display:flex;min-height:100vh}
+    .sidebar{width:304px;background:linear-gradient(180deg,#101a37 0%, #0d1730 100%);color:#fff;display:flex;flex-direction:column;justify-content:space-between}
+    .brand{display:flex;gap:14px;align-items:center;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .brand-badge{width:38px;height:38px;border-radius:10px;background:#d7b657;color:#fff;display:grid;place-items:center;font-weight:800}
+    .brand-title{font-size:18px;font-weight:700;line-height:1}
+    .brand-sub{font-size:14px;color:rgba(255,255,255,.7);margin-top:4px}
+    .nav{padding:20px 14px}
+    .nav-group{display:grid;gap:8px}
+    .nav-btn{display:flex;align-items:center;justify-content:space-between;width:100%;background:transparent;color:rgba(255,255,255,.78);border:0;padding:14px 14px;border-radius:14px;cursor:pointer}
+    .nav-btn:hover{background:rgba(255,255,255,.06)}
+    .nav-btn.active{background:#24325f;color:#fff}
+    .nav-left{display:flex;align-items:center;gap:14px}
+    .nav-ico{width:24px;text-align:center;font-size:22px;line-height:1}
+    .nav-plus{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:#d7b657;color:#fff;font-weight:700;font-size:15px}
+    .user-card{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-top:1px solid rgba(255,255,255,.08)}
+    .user-main{display:flex;gap:14px;align-items:center}
+    .avatar{width:34px;height:34px;border-radius:999px;background:#24325f;display:grid;place-items:center;font-weight:700}
+    .user-name{font-weight:700}
+    .user-email{color:rgba(255,255,255,.68)}
+    .logout{font-size:20px;color:rgba(255,255,255,.7)}
+    .main{flex:1;padding:28px 36px 40px}
+    .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:22px}
+    .title{font-size:34px;font-weight:800;line-height:1.15;margin:4px 0 6px}
+    .subtitle{font-size:18px;color:var(--muted)}
+    .top-action{background:var(--primary);color:#fff;border:0;border-radius:14px;padding:14px 24px;font-weight:700;cursor:pointer;box-shadow:var(--shadow)}
+    .top-action:hover{background:var(--primary-2)}
+    .grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+    .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}
+    .metric{padding:24px 26px}
+    .metric-label{font-size:16px;color:#8895ad;margin-bottom:10px}
+    .metric-value{font-size:34px;font-weight:800}
+    .metric-note{margin-top:8px;font-size:15px}
+    .up{color:var(--green)}
+    .down{color:var(--red)}
+    .section{margin-top:22px}
+    .section-head{display:flex;align-items:center;justify-content:space-between;padding:22px 24px 14px}
+    .section-title{font-size:18px;font-weight:800}
+    .section-body{padding:0 24px 24px}
+    .pipeline{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}
+    .stage{padding:22px;border-radius:16px;text-align:center;font-weight:700}
+    .stage-num{font-size:46px;line-height:1;margin-bottom:8px}
+    .stage-sm{font-size:14px;color:var(--muted);font-weight:600}
+    .toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 24px;border-bottom:1px solid var(--line)}
+    .search{display:flex;align-items:center;gap:12px;background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-width:380px}
+    .search input{border:0;background:transparent;outline:none;width:100%;font-size:16px;color:var(--text)}
+    .chips{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .chip{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:10px 16px;color:#67758d;cursor:pointer}
+    .chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+    .sort-wrap{display:flex;align-items:center;gap:12px;color:#7f8da5}
+    .sort-wrap select{border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:#fff;color:var(--text)}
+    table{width:100%;border-collapse:collapse}
+    th{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#95a1b7;text-align:left;padding:18px}
+    td{padding:20px 18px;border-top:1px solid var(--line);vertical-align:top}
+    .prop-name{font-size:18px;font-weight:700;margin-bottom:4px}
+    .prop-sub{color:#8a97ad}
+    .pill{display:inline-flex;align-items:center;border-radius:999px;padding:7px 14px;font-weight:700}
+    .pill.green{background:var(--green-bg);color:var(--green)}
+    .pill.amber{background:var(--amber-bg);color:var(--amber)}
+    .pill.purple{background:var(--purple-bg);color:var(--purple)}
+    .pill.blue{background:var(--blue-bg);color:var(--blue)}
+    .btn-lite{border:2px solid #42517c;background:#fff;color:#2b3758;border-radius:14px;padding:9px 16px;font-weight:700;cursor:pointer}
+    .btn-ghost{border:1px solid var(--line);background:#f6f8fb;color:#71809b;border-radius:14px;padding:9px 16px;font-weight:700;cursor:pointer}
+    .stepper{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:center;margin:12px 0 24px}
+    .step{display:flex;align-items:center;gap:14px;color:#94a0b5}
+    .step-circle{width:34px;height:34px;border-radius:999px;background:#e6ebf3;color:#7c879c;display:grid;place-items:center;font-weight:800}
+    .step.active .step-circle{background:var(--primary);color:#fff}
+    .step.done .step-circle{background:var(--green);color:#fff}
+    .step.active,.step.done{color:var(--text)}
+    .step-label{font-size:14px;font-weight:700}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+    .field label{display:block;font-size:15px;font-weight:700;margin-bottom:8px}
+    .field input,.field select,.field textarea{width:100%;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--text);outline:none}
+    .field textarea{min-height:140px;resize:vertical}
+    .hint{color:#7f8da5}
+    .upload-list{display:grid;gap:14px}
+    .upload-card{display:flex;align-items:center;justify-content:space-between;border:2px solid #77c77b;background:#eef7ef;border-radius:18px;padding:20px 22px}
+    .upload-left{display:flex;align-items:center;gap:16px}
+    .upload-ico{width:38px;height:38px;border-radius:10px;background:#fff;display:grid;place-items:center;font-size:24px}
+    .upload-title{font-size:16px;font-weight:800}
+    .req{display:inline-block;background:#f5dfa7;color:#bf8b17;border-radius:8px;padding:4px 8px;margin-left:10px;font-size:12px;font-weight:800}
+    .upload-file{color:var(--green);margin-top:6px}
+    .upload-meta{color:#97a4ba;margin-left:8px}
+    .tabs{display:flex;gap:28px;border-bottom:1px solid var(--line);padding:0 24px}
+    .tab{background:none;border:0;padding:18px 0;color:#6e7c94;cursor:pointer;font-size:16px}
+    .tab.active{color:var(--text);font-weight:700;border-bottom:3px solid var(--primary)}
+    .save-btn{background:var(--primary);color:#fff;border:0;border-radius:14px;padding:14px 24px;font-weight:800}
+    .settings-grid{display:grid;gap:18px}
+    .switch-row{display:flex;align-items:center;justify-content:space-between;padding:18px 0;border-top:1px solid #edf1f6}
+    .switch-row:first-child{border-top:0}
+    .switch-meta{color:#97a4ba;margin-top:4px}
+    .switch{width:56px;height:30px;background:#dce3ee;border-radius:999px;position:relative;border:0;cursor:pointer}
+    .switch.on{background:var(--primary)}
+    .switch::after{content:"";width:22px;height:22px;border-radius:999px;background:#fff;position:absolute;top:4px;left:4px;transition:left .2s}
+    .switch.on::after{left:30px}
+    .integration-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+    .integration{display:flex;justify-content:space-between;align-items:center;padding:24px 28px}
+    .integration-main{display:flex;gap:18px;align-items:center}
+    .integration-ico{font-size:34px}
+    .status-chip{border:2px solid #78c97c;color:#63bf6c;background:#f0fbf0;border-radius:12px;padding:7px 14px;font-weight:700}
+    .uw-wrap{padding:20px 24px 24px}
+    .uw-header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+    .uw-title{font-size:22px;font-weight:800}
+    .uw-sub{color:var(--muted)}
+    .uw-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+    .uw-tab{background:#f6f8fb;border:1px solid var(--line);border-radius:12px;padding:10px 14px;color:#5e6d87;cursor:pointer}
+    .uw-tab.active{background:var(--primary);border-color:var(--primary);color:#fff}
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+    .kpi{padding:18px 20px;border-radius:18px;border:1px solid var(--line);background:#fff}
+    .kpi-label{font-size:14px;color:#8b98ad;margin-bottom:8px}
+    .kpi-value{font-size:28px;font-weight:800}
+    .bar{height:9px;background:#edf2f8;border-radius:999px;margin-top:12px;overflow:hidden}
+    .bar-fill{height:100%;background:linear-gradient(90deg,#66c26f,#1f2d57)}
+    .uw-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-top:18px}
+    .uw-card{padding:20px;border-radius:20px;border:1px solid var(--line);background:#fff}
+    .uw-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .uw-form-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .small{font-size:13px;color:#8b98ad}
+    .verdict-box{padding:22px;border-radius:20px;color:#fff}
+    .verdict-good{background:linear-gradient(135deg,#64c36d,#27437b)}
+    .verdict-borderline{background:linear-gradient(135deg,#d39a32,#465a92)}
+    .verdict-bad{background:linear-gradient(135deg,#db665f,#465a92)}
+    .deal-sheet{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;font-size:15px}
+    .deal-sheet div:nth-child(odd){color:#7f8da5}
+    .review-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
+    .review-note{padding:16px 18px;background:#f7f9fc;border:1px dashed #cfd8e6;border-radius:16px;color:#6f7d94;line-height:1.5}
+    .score-card{display:flex;flex-direction:column;gap:14px}
+    .score-pill{display:inline-flex;border-radius:999px;padding:8px 14px;font-weight:800}
+    .score-pill.good{background:var(--green-bg);color:var(--green)}
+    .score-pill.borderline{background:var(--amber-bg);color:var(--amber)}
+    .score-pill.bad{background:#fdecec;color:var(--red)}
+    .footer-note{font-size:13px;color:#8b98ad;margin-top:10px}
+    @media (max-width: 1280px){
+      .grid-4,.grid-3,.kpi-grid,.uw-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .pipeline{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .review-grid,.uw-grid,.grid-2,.integration-grid,.form-grid{grid-template-columns:1fr}
+    }
+    @media (max-width: 960px){
+      .app{display:block}
+      .sidebar{width:100%}
+      .main{padding:20px}
+      .grid-4,.grid-3,.kpi-grid,.pipeline,.uw-form-grid,.uw-form-grid.two{grid-template-columns:1fr}
+      .search{min-width:0;width:100%}
+      .toolbar{display:block}
+      .toolbar > * + *{margin-top:12px}
+      .tabs{overflow:auto}
+      table{font-size:14px}
+      th,td{padding:14px 10px}
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    const state = {
+      page: 'deals',
+      settingsTab: 'loi',
+      newDealStep: 3,
+      uwTab: 'dashboard',
+      dealFilter: 'All',
+      dealSearch: '',
+      deals: [
+        {name:'Oakwood Apartments', address:'2400 Oak St, Houston, TX', type:'Multifamily', units:124, ask:8200000, offer:7800000, noi:492000, cap:6.0, status:'LOI Sent', date:'Apr 17, 2026'},
+        {name:'Riverside Plaza', address:'500 River Rd, Dallas, TX', type:'Mixed-Use', units:68, ask:5500000, offer:null, noi:341000, cap:6.2, status:'Under Review', date:'Apr 12, 2026'},
+        {name:'Summit Ridge', address:'900 Summit Dr, Austin, TX', type:'Multifamily', units:200, ask:14800000, offer:null, noi:814000, cap:5.5, status:'Processing', date:'Apr 11, 2026'},
+        {name:'Greenway Commons', address:'1100 Greenway Blvd, San Antonio, TX', type:'Multifamily', units:88, ask:6750000, offer:6400000, noi:405000, cap:6.0, status:'LOI Sent', date:'Apr 8, 2026'},
+        {name:'Harbor View Lofts', address:'320 Harbor Dr, Corpus Christi, TX', type:'Apartment', units:56, ask:3900000, offer:null, noi:234000, cap:6.0, status:'Docs Uploaded', date:'Apr 7, 2026'},
+        {name:'Grand Monarch', address:'Montgomery, TX', type:'Multifamily', units:72, ask:6000000, offer:5650000, noi:467000, cap:7.8, status:'Under Review', date:'Aug 5, 2025'}
+      ],
+      notifications: { delivered:true, expiry:true, processing:true, lowConfidence:true, weekly:false, updates:false },
+      integrations: { drive:true, docusign:false, procore:false, appfolio:false, buildium:false, zapier:false },
+      underwriting: {
+        propertyName: 'Grand Monarch Apartments',
+        market: 'Montgomery, TX',
+        purchasePrice: 6000000,
+        marketCap: 6.3,
+        actualMonthlyRent: 74750,
+        units: 72,
+        avgUnitRent: 1319,
+        otherIncomeAnnual: 1366,
+        vacancyPct: 10,
+        opExAnnual: 340000,
+        closingCosts: 150000,
+        capex: 0,
+        reserves: 142549,
+        ltv: 70,
+        rate: 6.75,
+        amortYears: 30,
+        ioYears: 1,
+        holdYears: 5,
+        exitCap: 6.0,
+        refiCap: 6.75,
+        refiLtv: 75,
+        lenderReserves: 0,
+        notes: 'Seeded from Synthesis / Proforma and CoStar comps. Market cap benchmark set to 6.3%.'
+      }
+    };
+    const icons = { dashboard:'⌂', plus:'＋', bag:'▣', gear:'⚙', folder:'🗂', doc:'📊', house:'🏠', crane:'🏗', building:'🏢', pen:'✍️', bolt:'⚡' };
+    function money(n){ return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(Number(n)||0); }
+    function num(n){ return Number(String(n).replace(/[$,%\s,]/g,'')) || 0; }
+    function pct(n,d=1){ return `${(Number(n)||0).toFixed(d)}%`; }
+    function annualDebtService(uw){ const loan = uw.purchasePrice * (uw.ltv/100); const r = uw.rate/100/12; const n = uw.amortYears*12; if (!loan || !n) return 0; const pmt = r === 0 ? loan/n : (loan*r)/(1 - Math.pow(1+r,-n)); return pmt*12; }
+    function egi(uw){ return (uw.actualMonthlyRent * 12 * (1 - uw.vacancyPct/100)) + uw.otherIncomeAnnual; }
+    function noi(uw){ return egi(uw) - uw.opExAnnual; }
+    function capRate(uw){ return uw.purchasePrice ? (noi(uw)/uw.purchasePrice)*100 : 0; }
+    function dscr(uw){ const ds = annualDebtService(uw); return ds ? (noi(uw)/ds) : 0; }
+    function loanAmount(uw){ return uw.purchasePrice * (uw.ltv/100); }
+    function equityNeeded(uw){ return uw.purchasePrice - loanAmount(uw) + uw.closingCosts + uw.capex + uw.reserves + uw.lenderReserves; }
+    function terminalValue(uw){ return uw.exitCap ? noi(uw)/(uw.exitCap/100) : 0; }
+    function remainingBalance(uw){ const principal = loanAmount(uw); const r = uw.rate/100/12; const n = uw.amortYears*12; const m = Math.max((uw.holdYears - uw.ioYears) * 12, 0); if (!principal) return 0; if (r === 0) { const pmt = principal / n; return Math.max(0, principal - pmt*m); } const pmt = (principal*r)/(1 - Math.pow(1+r,-n)); if (m <= 0) return principal; return principal*Math.pow(1+r,m) - pmt*((Math.pow(1+r,m)-1)/r); }
+    function equityMultiple(uw){ const eq = equityNeeded(uw); if (!eq) return 0; const ds = annualDebtService(uw); const ioDs = loanAmount(uw)*(uw.rate/100); let totalCash = 0; for (let y=1; y<=uw.holdYears; y++){ const annual = y <= uw.ioYears ? ioDs : ds; totalCash += Math.max(noi(uw) - annual, 0); } const saleCosts = terminalValue(uw)*0.01; const saleNet = Math.max(terminalValue(uw) - saleCosts - remainingBalance(uw), 0); totalCash += saleNet; return totalCash/eq; }
+    function refiValue(uw){ return uw.refiCap ? noi(uw)/(uw.refiCap/100) : 0; }
+    function refiProceeds(uw){ const gross = refiValue(uw)*(uw.refiLtv/100); return Math.max(gross - remainingBalance({...uw, holdYears:1}), 0); }
+    function dealScore(uw){ let score = 0; const c = capRate(uw), d = dscr(uw), e = equityMultiple(uw); if (c >= uw.marketCap) score += 1; else if (c >= uw.marketCap*0.9) score += 0.5; if (d >= 1.25) score += 1; else if (d >= 1.15) score += 0.5; if (e >= 2.0) score += 1; else if (e >= 1.7) score += 0.5; let label = 'Bad', cls = 'bad'; if (score >= 2.5) { label = 'Good'; cls = 'good'; } else if (score >= 1.5) { label = 'Borderline'; cls = 'borderline'; } return {score,label,cls}; }
+    function statusPill(status){ const map = { 'LOI Sent':'green', 'Under Review':'amber', 'Processing':'blue', 'Docs Uploaded':'purple', 'Closed':'green', 'Passed':'amber' }; return `<span class="pill ${map[status] || 'blue'}">${status}</span>`; }
+    function topActionLabel(){ if (state.page === 'settings') return 'Save Changes'; return '＋  New Deal'; }
+    function pageTitle(){ if (state.page === 'dashboard') return 'Dashboard'; if (state.page === 'deals') return 'My Deals'; if (state.page === 'newDeal') return 'New Deal'; return 'Settings'; }
+    function pageSubtitle(){ if (state.page === 'dashboard') return "Welcome back, John. Here's your deal pipeline."; if (state.page === 'deals') return 'All underwriting deals - active and historical'; if (state.page === 'newDeal') return 'Upload documents to start the underwriting process'; return 'Manage your account, company, and preferences'; }
+    function renderSidebar(){ const navItem = (id,label,icon,right='', active = state.page===id) => `<button class="nav-btn ${active ? 'active':''}" data-nav="${id}"><span class="nav-left"><span class="nav-ico">${icon}</span><span>${label}</span></span>${right}</button>`; return `<aside class="sidebar"><div><div class="brand"><div class="brand-badge">▣</div><div><div class="brand-title">Proverbs31 Underwrite</div><div class="brand-sub">P31LS UW Platform</div></div></div><div class="nav"><div class="nav-group">${navItem('dashboard','Dashboard',icons.dashboard)}${navItem('newDeal','New Deal',icons.plus,'<span class="nav-plus">+</span>')}${navItem('deals','My Deals',icons.bag)}${navItem('settings','Settings',icons.gear)}</div></div></div><div class="user-card"><div class="user-main"><div class="avatar">P31</div><div><div class="user-name">P31LS</div><div class="user-email">P31LS@gmail.com</div></div></div><div class="logout">↪</div></div></aside>`; }
+    function renderDashboard(){ return `<div class="grid-4"><div class="card metric"><div class="metric-label">Active Deals</div><div class="metric-value">12</div><div class="metric-note up">▲ +3 this month</div></div><div class="card metric"><div class="metric-label">LOIs Sent</div><div class="metric-value">28</div><div class="metric-note up">▲ +6 this month</div></div><div class="card metric"><div class="metric-label">Avg. Cap Rate</div><div class="metric-value">6.4%</div><div class="metric-note down">▼ -0.2% vs last month</div></div><div class="card metric"><div class="metric-label">Total Deal Value</div><div class="metric-value">$142M</div><div class="metric-note up">▲ +$18M this month</div></div></div><div class="card section"><div class="section-head"><div class="section-title">Deal Pipeline</div></div><div class="section-body"><div class="pipeline"><div class="stage" style="background:var(--purple-bg);color:var(--purple)"><div class="stage-num">1</div><div class="stage-sm">Docs Uploaded</div></div><div class="stage" style="background:var(--blue-bg);color:var(--blue)"><div class="stage-num">1</div><div class="stage-sm">Processing</div></div><div class="stage" style="background:var(--amber-bg);color:var(--amber)"><div class="stage-num">2</div><div class="stage-sm">Under Review</div></div><div class="stage" style="background:#f2efe6;color:#b79d46"><div class="stage-num">1</div><div class="stage-sm">LOI Generated</div></div><div class="stage" style="background:var(--green-bg);color:var(--green)"><div class="stage-num">7</div><div class="stage-sm">LOI Sent</div></div></div></div></div><div class="card section"><div class="toolbar"><div class="section-title">Recent Deals</div><div style="display:flex;align-items:center;gap:16px"><div class="search"><span>⌕</span><input id="dashSearch" placeholder="Search deals..." /></div><button class="tab" data-nav="deals" style="padding:0">View all →</button></div></div>${renderDealsTable(state.deals.slice(0,4), true)}</div>`; }
+    function filteredDeals(){ return state.deals.filter(d => { const text = `${d.name} ${d.address} ${d.type}`.toLowerCase(); const matchesSearch = !state.dealSearch || text.includes(state.dealSearch.toLowerCase()); const matchesFilter = state.dealFilter === 'All' || d.status === state.dealFilter; return matchesSearch && matchesFilter; }); }
+    function renderDealsTable(deals, compact = false){ const rows = deals.map(d => `<tr><td><div class="prop-name">${d.name}</div><div class="prop-sub">${d.address}</div></td><td>${d.type}</td>${compact ? '' : `<td>${d.units ?? '—'}</td>`}<td>${money(d.ask)}</td>${compact ? `<td>${money(d.noi)}</td>` : `<td style="color:${d.offer ? '#67c16f' : '#95a1b7'}">${d.offer ? money(d.offer) : '—'}</td>`}<td style="font-weight:800;color:${d.cap >= 6 ? '#67c16f' : '#d39a32'}">${pct(d.cap)}</td><td>${statusPill(d.status)}</td><td>${d.date}</td><td><button class="btn-lite" data-open="${d.name}">${compact ? (d.status === 'LOI Sent' ? 'View LOI' : 'Review') : 'View'}</button>${compact ? '' : (d.status === 'LOI Sent' ? '<button class="btn-ghost" style="margin-left:8px">LOI</button>' : '')}</td></tr>`).join(''); return `<table><thead><tr><th>Property</th><th>Type</th>${compact ? '' : '<th>Units</th>'}<th>Ask Price</th>${compact ? '<th>NOI</th>' : '<th>Offer Price</th>'}<th>Cap Rate</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody>${rows}</tbody></table>`; }
+    function renderDealsPage(){ return `<div class="grid-4"><div class="card metric"><div class="metric-label">Total Deals</div><div class="metric-value">8</div></div><div class="card metric"><div class="metric-label">LOIs Sent</div><div class="metric-value">4</div><div class="metric-note hint">this year</div></div><div class="card metric"><div class="metric-label">Deals Closed</div><div class="metric-value">2</div><div class="metric-note hint">this year</div></div><div class="card metric"><div class="metric-label">Total Value Analyzed</div><div class="metric-value">$71.7M</div><div class="metric-note hint">across all deals</div></div></div><div class="card section"><div class="toolbar"><div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div class="search"><span>⌕</span><input id="dealSearch" value="${escapeHtml(state.dealSearch)}" placeholder="Search deals, addresses..." /></div><div class="chips">${['All','Processing','Under Review','LOI Sent','Closed','Passed'].map(c => `<button class="chip ${state.dealFilter===c?'active':''}" data-filter="${c}">${c}</button>`).join('')}</div></div><div class="sort-wrap"><span>Sort by:</span><select id="sortBy"><option>Date (newest)</option><option>Cap Rate</option><option>Ask Price</option></select></div></div>${renderDealsTable(filteredDeals())}</div>`; }
+    function renderNewDealPage(){ const step = state.newDealStep; const stepItem = (n, label) => { const cls = step > n ? 'done' : step === n ? 'active' : ''; return `<div class="step ${cls}" data-step="${n}"><div class="step-circle">${step > n ? '✓' : n}</div><div class="step-label">${label}</div></div>`; }; return `<div style="margin-bottom:12px;color:#6f7d94;font-size:14px">← Back to Dashboard</div><div class="stepper">${stepItem(1,'Upload Docs')}${stepItem(2,'Processing')}${stepItem(3,'Review Data')}${stepItem(4,'Generate LOI')}${stepItem(5,'Send LOI')}</div><div class="card section"><div class="section-head"><div class="section-title">Deal Information</div></div><div class="section-body"><div class="form-grid"><div class="field"><label>Property Name</label><input id="uw-propertyName" value="${escapeHtml(state.underwriting.propertyName)}" /></div><div class="field"><label>Property Type</label><select><option selected>Multifamily</option><option>Mixed-Use</option><option>Industrial</option></select></div><div class="field"><label>Address</label><input value="Montgomery, TX" /></div><div class="field"><label>Asking Price</label><input id="uw-purchasePrice" value="${state.underwriting.purchasePrice}" /></div></div></div></div><div class="card section"><div class="section-head"><div><div class="section-title">Upload Documents</div><div class="hint">Supported formats: PDF, XLSX, XLS, CSV, DOCX</div></div><button class="btn-ghost" id="seedGrandMonarch">Load Grand Monarch Seed Data</button></div><div class="section-body"><div class="upload-list"><div class="upload-card"><div class="upload-left"><div class="upload-ico">📊</div><div><div class="upload-title">T-12 Operating Statement <span class="req">Required</span></div><div class="upload-file">✓ Grand Monarch Proforma.xlsx <span class="upload-meta">Uploaded</span></div></div></div><div><input type="file" id="upload-proforma" style="display:none" /><button class="btn-ghost" data-upload="upload-proforma">Replace</button></div></div><div class="upload-card"><div class="upload-left"><div class="upload-ico">🏠</div><div><div class="upload-title">Current Rent Roll <span class="req">Required</span></div><div class="upload-file">✓ rent_roll Grand Monarch.pdf <span class="upload-meta">Uploaded</span></div></div></div><div><input type="file" id="upload-rent" style="display:none" /><button class="btn-ghost" data-upload="upload-rent">Replace</button></div></div><div class="upload-card"><div class="upload-left"><div class="upload-ico">🧾</div><div><div class="upload-title">OM / Costar / Comps <span class="req">Optional</span></div><div class="upload-file">✓ OM + CoStar comps loaded <span class="upload-meta">Market cap benchmark 6.3%</span></div></div></div><div><input type="file" id="upload-comps" style="display:none" multiple /><button class="btn-ghost" data-upload="upload-comps">Replace</button></div></div></div><div class="footer-note">The screenshots you shared were used to mirror the left rail navigation, deal list, wizard flow, and settings layout. The underwriting workbench now lives inside the Review Data step.</div></div></div><div class="card section"><div class="section-head"><div><div class="section-title">Review Data</div><div class="hint">Fast napkin and detailed underwriting in one workbench</div></div><div class="chips"><button class="chip ${step===1?'active':''}" data-step="1">Upload</button><button class="chip ${step===2?'active':''}" data-step="2">Processing</button><button class="chip ${step===3?'active':''}" data-step="3">Review</button><button class="chip ${step===4?'active':''}" data-step="4">LOI</button><button class="chip ${step===5?'active':''}" data-step="5">Send</button></div></div><div class="section-body">${step === 1 ? renderUploadStep() : step === 2 ? renderProcessingStep() : step === 3 ? renderUnderwritingWorkbench() : step === 4 ? renderLoiStep() : renderSendStep()}</div></div>`; }
+    function renderUploadStep(){ return `<div class="review-note">Upload the proforma, rent roll, OM, and CoStar report. The tool is already seeded with Grand Monarch numbers so you can move straight into review.</div>`; }
+    function renderProcessingStep(){ return `<div class="review-grid"><div class="uw-card"><div class="section-title" style="margin-bottom:10px">Processing Queue</div><div class="switch-row"><div><div>Rent Roll extraction</div><div class="switch-meta">Completed</div></div><div class="pill green">92% confidence</div></div><div class="switch-row"><div><div>OM unit mix extraction</div><div class="switch-meta">Completed</div></div><div class="pill green">94% confidence</div></div><div class="switch-row"><div><div>CoStar comp scrape</div><div class="switch-meta">Completed</div></div><div class="pill green">6.3% benchmark</div></div><div class="switch-row"><div><div>Proforma line item mapping</div><div class="switch-meta">Needs review</div></div><div class="pill amber">86% confidence</div></div></div><div class="review-note">Use Review Data to validate extracted rents, vacancy, expenses, and exit assumptions before the LOI is generated. The tool highlights cap rate against market standards and checks whether equity multiple clears 2.0x.</div></div>`; }
+    function renderLoiStep(){ return `<div class="review-grid"><div class="uw-card"><div class="section-title" style="margin-bottom:14px">LOI Summary</div><div class="deal-sheet"><div>Property</div><div>${escapeHtml(state.underwriting.propertyName)}</div><div>Asking Price</div><div>${money(state.underwriting.purchasePrice)}</div><div>Proposed Offer</div><div>${money(Math.round(state.underwriting.purchasePrice*0.94))}</div><div>Financing Contingency</div><div>Yes - 21 days post-DD</div><div>DD Period</div><div>30 days</div><div>Closing Period</div><div>45 days</div><div>EMD</div><div>$150,000</div></div></div><div class="review-note">The LOI step inherits defaults from the Settings screens you shared. You can tune LTV target, DD period, closing period, EMD, and custom boilerplate clauses in Settings -> LOI Template.</div></div>`; }
+    function renderSendStep(){ return `<div class="review-grid"><div class="uw-card"><div class="section-title" style="margin-bottom:14px">Send LOI</div><div class="form-grid"><div class="field"><label>Reply-To Email</label><input value="P31LS@gmail.com" /></div><div class="field"><label>Broker Contact</label><input value="broker@example.com" /></div><div class="field" style="grid-column:1 / -1"><label>Email Signature</label><textarea>P31LS\nManaging Partner, Davis Capital Group</textarea></div></div></div><div class="review-note">The email and notification settings match your screenshots. You can route through the platform address, custom SMTP, or Google Workspace, then toggle delivery and expiration alerts in Settings.</div></div>`; }
+    function renderUnderwritingWorkbench(){ const uw = state.underwriting; const score = dealScore(uw); const verdictClass = score.cls === 'good' ? 'verdict-good' : score.cls === 'borderline' ? 'verdict-borderline' : 'verdict-bad'; const uwTab = state.uwTab; const kpi = (label, value, pctWidth) => `<div class="kpi"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div><div class="bar"><div class="bar-fill" style="width:${Math.max(8, Math.min(100, pctWidth))}%"></div></div></div>`; return `<div class="uw-wrap"><div class="uw-header"><div><div class="uw-title">Grand Monarch - Underwriting Workbench</div><div class="uw-sub">Simple, investor-ready screening with visuals. The tool is aligned to the UI direction in your screenshots.</div></div><div class="score-pill ${score.cls}">${score.label} Deal</div></div><div class="uw-tabs">${['dashboard','actuals','napkin','pl','refi','costs','dealsheet'].map(t => `<button class="uw-tab ${uwTab===t?'active':''}" data-uwtab="${t}">${labelUwTab(t)}</button>`).join('')}</div>${uwTab === 'dashboard' ? `<div class="kpi-grid">${kpi('Cap Rate', pct(capRate(uw),2), (capRate(uw)/uw.marketCap)*100)}${kpi('DSCR', dscr(uw).toFixed(2), (dscr(uw)/1.25)*100)}${kpi('Equity Multiple', equityMultiple(uw).toFixed(2)+'x', (equityMultiple(uw)/2)*100)}${kpi('Market Benchmark', pct(uw.marketCap,1), 100)}</div><div class="uw-grid"><div class="uw-card"><div class="section-title" style="margin-bottom:14px">Quick Inputs</div><div class="uw-form-grid"><div class="field"><label>Purchase Price</label><input data-uw="purchasePrice" value="${uw.purchasePrice}" /></div><div class="field"><label>Actual Monthly Rent</label><input data-uw="actualMonthlyRent" value="${uw.actualMonthlyRent}" /></div><div class="field"><label>Units</label><input data-uw="units" value="${uw.units}" /></div><div class="field"><label>Other Income Annual</label><input data-uw="otherIncomeAnnual" value="${uw.otherIncomeAnnual}" /></div><div class="field"><label>Vacancy %</label><input data-uw="vacancyPct" value="${uw.vacancyPct}" /></div><div class="field"><label>OpEx Annual</label><input data-uw="opExAnnual" value="${uw.opExAnnual}" /></div><div class="field"><label>LTV %</label><input data-uw="ltv" value="${uw.ltv}" /></div><div class="field"><label>Rate %</label><input data-uw="rate" value="${uw.rate}" /></div><div class="field"><label>Amort Years</label><input data-uw="amortYears" value="${uw.amortYears}" /></div></div><div class="footer-note">Debt terms stay editable, including LTV, rate, amortization, and IO years. Market cap is seeded to 6.3% from the comp set.</div></div><div class="score-card"><div class="uw-card"><canvas id="scoreChart" height="220"></canvas></div><div class="uw-card"><div class="section-title" style="margin-bottom:12px">Deal Snapshot</div><div class="deal-sheet"><div>NOI</div><div>${money(noi(uw))}</div><div>Debt Service</div><div>${money(annualDebtService(uw))}</div><div>Equity Required</div><div>${money(equityNeeded(uw))}</div><div>Exit Value</div><div>${money(terminalValue(uw))}</div><div>Refi Value</div><div>${money(refiValue(uw))}</div><div>Refi Proceeds</div><div>${money(refiProceeds(uw))}</div></div></div><div class="verdict-box ${verdictClass}"><div style="font-size:14px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;opacity:.85">Verdict</div><div style="font-size:34px;font-weight:900;margin:6px 0 8px">${score.label}</div><div>This deal ${score.label === 'Good' ? 'meets' : score.label === 'Borderline' ? 'nearly meets' : 'misses'} your cap rate, debt coverage, and equity multiple targets.</div></div></div></div>` : ''}${uwTab === 'actuals' ? `<div class="review-grid"><div class="uw-card"><div class="section-title" style="margin-bottom:14px">Actuals and Unit Mix</div><div class="uw-form-grid two"><div class="field"><label>Property Name</label><input data-uw-text="propertyName" value="${escapeHtml(uw.propertyName)}" /></div><div class="field"><label>Market</label><input data-uw-text="market" value="${escapeHtml(uw.market)}" /></div><div class="field"><label>Units</label><input data-uw="units" value="${uw.units}" /></div><div class="field"><label>Average Rent / Unit</label><input data-uw="avgUnitRent" value="${uw.avgUnitRent}" /></div><div class="field"><label>Actual Monthly Rent</label><input data-uw="actualMonthlyRent" value="${uw.actualMonthlyRent}" /></div><div class="field"><label>Vacancy %</label><input data-uw="vacancyPct" value="${uw.vacancyPct}" /></div></div></div><div class="uw-card"><div class="section-title" style="margin-bottom:14px">Data Notes</div><div class="review-note"><strong>Rent Roll:</strong> seeded to $74,750 monthly scheduled rent.<br><br><strong>OM / Synthesis:</strong> 72 units, average unit rent around $1,319, sponsor reserves around $142,549.<br><br><strong>CoStar:</strong> benchmark cap rate set to 6.3%.</div></div></div>` : ''}${uwTab === 'napkin' ? `<div class="review-grid"><div class="uw-card"><div class="section-title" style="margin-bottom:14px">Napkin Underwriting</div><div class="uw-form-grid two"><div class="field"><label>Market Cap Target %</label><input data-uw="marketCap" value="${uw.marketCap}" /></div><div class="field"><label>Exit Cap %</label><input data-uw="exitCap" value="${uw.exitCap}" /></div><div class="field"><label>Closing Costs</label><input data-uw="closingCosts" value="${uw.closingCosts}" /></div><div class="field"><label>CapEx</label><input data-uw="capex" value="${uw.capex}" /></div><div class="field"><label>Reserves</label><input data-uw="reserves" value="${uw.reserves}" /></div><div class="field"><label>Hold Years</label><input data-uw="holdYears" value="${uw.holdYears}" /></div></div><div class="footer-note">Use this view for quick broker calls and investor screening. It keeps the critical numbers tight and fast.</div></div><div class="uw-card"><div class="section-title" style="margin-bottom:14px">Napkin Output</div><div class="deal-sheet"><div>EGI</div><div>${money(egi(uw))}</div><div>NOI</div><div>${money(noi(uw))}</div><div>Cap Rate</div><div>${pct(capRate(uw),2)}</div><div>DSCR</div><div>${dscr(uw).toFixed(2)}</div><div>Equity Required</div><div>${money(equityNeeded(uw))}</div><div>Equity Multiple</div><div>${equityMultiple(uw).toFixed(2)}x</div></div></div></div>` : ''}${uwTab === 'pl' ? `<div class="review-grid"><div class="uw-card"><div class="section-title" style="margin-bottom:14px">Income Statement View</div><canvas id="incomeChart" height="260"></canvas></div><div class="uw-card"><div class="section-title" style="margin-bottom:14px">P&L Summary</div><div class="deal-sheet"><div>Gross Scheduled Rent</div><div>${money(uw.actualMonthlyRent*12)}</div><div>Vacancy Loss</div><div>${money(uw.actualMonthlyRent*12*uw.vacancyPct/100)}</div><div>Other Income</div><div>${money(uw.otherIncomeAnnual)}</div><div>Effective Gross Income</div><div>${money(egi(uw))}</div><div>Operating Expense</div><div>${money(uw.opExAnnual)}</div><div>NOI</div><div>${money(noi(uw))}</div><div>Debt Service</div><div>${money(annualDebtService(uw))}</div><div>Cash Flow After Debt</div><div>${money(Math.max(noi(uw)-annualDebtService(uw),0))}</div></div></div></div>` : ''}${uwTab === 'refi' ? `<div class="review-grid"><div class="uw-card"><div class="section-title" style="margin-bottom:14px">Refi and Exit Strategy</div><div class="uw-form-grid two"><div class="field"><label>Refi Cap %</label><input data-uw="refiCap" value="${uw.refiCap}" /></div><div class="field"><label>Refi LTV %</label><input data-uw="refiLtv" value="${uw.refiLtv}" /></div><div class="field"><label>Exit Cap %</label><input data-uw="exitCap" value="${uw.exitCap}" /></div><div class="field"><label>Hold Years</label><input data-uw="holdYears" value="${uw.holdYears}" /></div><div class="field"><label>IO Years</label><input data-uw="ioYears" value="${uw.ioYears}" /></div><div class="field"><label>Amort Years</label><input data-uw="amortYears" value="${uw.amortYears}" /></div></div></div><div class="uw-card"><div class="section-title" style="margin-bottom:14px">Strategy Output</div><div class="deal-sheet"><div>Refi Value</div><div>${money(refiValue(uw))}</div><div>Estimated Refi Proceeds</div><div>${money(refiProceeds(uw))}</div><div>Terminal Value</div><div>${money(terminalValue(uw))}</div><div>Sale Costs</div><div>${money(terminalValue(uw)*0.01)}</div><div>Estimated Loan Balance</div><div>${money(remainingBalance(uw))}</div><div>Net Sale Proceeds</div><div>${money(Math.max(terminalValue(uw) - terminalValue(uw)*0.01 - remainingBalance(uw), 0))}</div></div></div></div>` : ''}${uwTab === 'costs' ? `<div class="review-grid"><div class="uw-card"><div class="section-title" style="margin-bottom:14px">Closing Costs, CapEx and Reserves</div><div class="uw-form-grid two"><div class="field"><label>Closing Costs</label><input data-uw="closingCosts" value="${uw.closingCosts}" /></div><div class="field"><label>CapEx</label><input data-uw="capex" value="${uw.capex}" /></div><div class="field"><label>Reserves</label><input data-uw="reserves" value="${uw.reserves}" /></div><div class="field"><label>Lender Reserves</label><input data-uw="lenderReserves" value="${uw.lenderReserves}" /></div></div></div><div class="uw-card"><div class="section-title" style="margin-bottom:14px">Capital Stack Snapshot</div><div class="deal-sheet"><div>Purchase Price</div><div>${money(uw.purchasePrice)}</div><div>Debt</div><div>${money(loanAmount(uw))}</div><div>Equity to Close</div><div>${money(uw.purchasePrice - loanAmount(uw))}</div><div>Closing Costs</div><div>${money(uw.closingCosts)}</div><div>CapEx + Reserves</div><div>${money(uw.capex + uw.reserves + uw.lenderReserves)}</div><div>Total Equity Required</div><div>${money(equityNeeded(uw))}</div></div></div></div>` : ''}${uwTab === 'dealsheet' ? `<div class="review-grid"><div class="uw-card"><div class="section-title" style="margin-bottom:14px">Investor Deal Sheet</div><div class="deal-sheet"><div>Property</div><div>${escapeHtml(uw.propertyName)}</div><div>Market</div><div>${escapeHtml(uw.market)}</div><div>Units</div><div>${uw.units}</div><div>Purchase Price</div><div>${money(uw.purchasePrice)}</div><div>Actual Monthly Rent</div><div>${money(uw.actualMonthlyRent)}</div><div>NOI</div><div>${money(noi(uw))}</div><div>Cap Rate</div><div>${pct(capRate(uw),2)}</div><div>DSCR</div><div>${dscr(uw).toFixed(2)}</div><div>Equity Multiple</div><div>${equityMultiple(uw).toFixed(2)}x</div><div>Exit Value</div><div>${money(terminalValue(uw))}</div><div>Refi Value</div><div>${money(refiValue(uw))}</div><div>Market Cap Benchmark</div><div>${pct(uw.marketCap,1)}</div></div></div><div class="uw-card"><div class="section-title" style="margin-bottom:14px">Notes</div><div class="review-note">${escapeHtml(uw.notes)}</div></div></div>` : ''}</div>`; }
+    function renderSettingsPage(){ const tab = state.settingsTab; return `<div class="card"><div class="tabs">${settingsTabs().map(([id,label]) => `<button class="tab ${tab===id?'active':''}" data-stab="${id}">${label}</button>`).join('')}</div><div class="section-body" style="padding-top:24px">${tab === 'profile' ? renderProfileSettings() : ''}${tab === 'company' ? renderCompanySettings() : ''}${tab === 'loi' ? renderLoiSettings() : ''}${tab === 'email' ? renderEmailSettings() : ''}${tab === 'notifications' ? renderNotificationSettings() : ''}${tab === 'integrations' ? renderIntegrationSettings() : ''}</div></div>`; }
+    function settingsTabs(){ return [['profile','Profile'],['company','Company'],['loi','LOI Template'],['email','Email'],['notifications','Notifications'],['integrations','Integrations']]; }
+    function renderProfileSettings(){ return `<div class="settings-grid"><div class="card" style="padding:28px"><div class="section-title" style="margin-bottom:18px">Profile</div><div class="form-grid"><div class="field"><label>Full Name</label><input value="P31LS" /></div><div class="field"><label>Title</label><input value="Managing Partner" /></div><div class="field"><label>Email</label><input value="P31LS@gmail.com" /></div><div class="field"><label>Phone</label><input value="(713) 555-0182" /></div></div></div></div>`; }
+    function renderCompanySettings(){ return `<div class="settings-grid"><div class="card" style="padding:28px"><div class="section-title" style="margin-bottom:18px">Company</div><div class="form-grid"><div class="field"><label>Company Name</label><input value="Davis Capital Group" /></div><div class="field"><label>Target Markets</label><input value="Texas Sunbelt" /></div><div class="field"><label>Acquisition Focus</label><input value="Value-add Multifamily" /></div><div class="field"><label>Buy Box</label><input value="50-250 units" /></div></div></div></div>`; }
+    function renderLoiSettings(){ return `<div class="settings-grid"><div class="card" style="padding:28px"><div class="section-title">Default LOI Template</div><div class="hint" style="margin-top:6px;margin-bottom:22px">Set defaults for all new LOIs. These can be overridden per deal.</div><div class="form-grid"><div class="field"><label>Default Financing Contingency</label><select><option>Yes - 21 days post-DD</option><option>No</option></select></div><div class="field"><label>Default LTV Target</label><input value="65-70%" /></div><div class="field"><label>Default DD Period (days)</label><input value="30" /></div><div class="field"><label>Default Closing Period (days)</label><input value="45" /></div><div class="field"><label>Default EMD Amount</label><input value="$150,000" /></div><div class="field"><label>LOI Expiry (days from send)</label><input value="4" /></div><div class="field"><label>Assignment Rights Default</label><select><option>Yes</option><option>No</option></select></div></div></div><div class="card" style="padding:28px"><div class="section-title" style="margin-bottom:16px">Custom Boilerplate Clauses</div><div class="field"><textarea placeholder="Add any standard custom clauses that should be included in every LOI..."></textarea></div></div></div>`; }
+    function renderEmailSettings(){ return `<div class="settings-grid"><div class="card" style="padding:28px"><div class="section-title">Email Sending</div><div class="hint" style="margin-top:6px;margin-bottom:22px">Configure how LOIs are sent to brokers.</div><div class="card" style="padding:18px;border-radius:16px;margin-bottom:14px"><label><input type="radio" checked /> <strong>Proverbs31 Underwrite Email (default)</strong><div class="hint" style="margin-left:28px">Sent from noreply@propunderwrite.com on your behalf</div></label></div><div class="card" style="padding:18px;border-radius:16px;margin-bottom:14px"><label><input type="radio" /> <strong>Custom SMTP</strong><div class="hint" style="margin-left:28px">Use your own email server</div></label></div><div class="card" style="padding:18px;border-radius:16px;margin-bottom:18px"><label><input type="radio" /> <strong>Gmail / Google Workspace</strong><div class="hint" style="margin-left:28px">Connect your Google account</div></label></div><div class="form-grid"><div class="field"><label>Reply-To Email</label><input value="P31LS@gmail.com" /></div></div></div><div class="card" style="padding:28px"><div class="section-title" style="margin-bottom:16px">Email Signature</div><div class="field"><textarea>P31LS\nManaging Partner, Davis Capital Group</textarea></div></div></div>`; }
+    function renderNotificationSettings(){ const row = (key,title,desc) => `<div class="switch-row"><div><div style="font-size:16px;font-weight:700">${title}</div><div class="switch-meta">${desc}</div></div><button class="switch ${state.notifications[key] ? 'on':''}" data-switch="${key}" aria-label="${title}"></button></div>`; return `<div class="card" style="padding:28px"><div class="section-title" style="margin-bottom:16px">Notification Preferences</div>${row('delivered','LOI delivered confirmation',"When the broker's server confirms receipt")}${row('expiry','LOI expiration reminder','24 hours before the LOI expires')}${row('processing','Deal processing complete','When document extraction finishes')}${row('lowConfidence','Low extraction confidence','When AI confidence is below 90%')}${row('weekly','Weekly deal summary','Weekly pipeline recap')}${row('updates','Product updates','New features and improvements')}</div>`; }
+    function renderIntegrationSettings(){ const card = (key, icon, title, desc, connected) => `<div class="card integration"><div class="integration-main"><div class="integration-ico">${icon}</div><div><div class="section-title" style="font-size:18px">${title}</div><div class="hint">${desc}</div></div></div>${connected ? '<div class="status-chip">Connected</div>' : `<button class="btn-lite" data-connect="${key}">Connect</button>`}</div>`; return `<div class="integration-grid">${card('drive',icons.folder,'Google Drive','Sync documents and LOIs to Google Drive',state.integrations.drive)}${card('docusign',icons.pen,'DocuSign','E-sign PSAs and closing docs',state.integrations.docusign)}${card('procore',icons.crane,'Procore','Connect to project management',state.integrations.procore)}${card('appfolio',icons.building,'AppFolio','Import property data directly',state.integrations.appfolio)}${card('buildium',icons.doc,'Buildium','Sync rent rolls from Buildium',state.integrations.buildium)}${card('zapier',icons.bolt,'Zapier','Connect to 5,000+ apps via Zapier',state.integrations.zapier)}</div>`; }
+    function labelUwTab(t){ return { dashboard:'Dashboard', actuals:'Actual and Unit Mix', napkin:'Napkin', pl:'P&L', refi:'Refi / Exit', costs:'Costs / Reserves', dealsheet:'Deal Sheet' }[t]; }
+    function escapeHtml(str){ return String(str ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
+    function render(){ const html = `<div class="app">${renderSidebar()}<main class="main"><div class="topbar"><div><div class="title">${pageTitle()}</div><div class="subtitle">${pageSubtitle()}</div></div><button class="${state.page==='settings' ? 'save-btn' : 'top-action'}" id="topAction">${topActionLabel()}</button></div>${state.page === 'dashboard' ? renderDashboard() : ''}${state.page === 'deals' ? renderDealsPage() : ''}${state.page === 'newDeal' ? renderNewDealPage() : ''}${state.page === 'settings' ? renderSettingsPage() : ''}</main></div>`; document.getElementById('app').innerHTML = html; bindEvents(); renderCharts(); }
+    function bindEvents(){ document.querySelectorAll('[data-nav]').forEach(btn => { btn.onclick = () => { state.page = btn.dataset.nav; render(); }; }); document.querySelectorAll('[data-filter]').forEach(btn => { btn.onclick = () => { state.dealFilter = btn.dataset.filter; render(); }; }); document.querySelectorAll('[data-step]').forEach(btn => { btn.onclick = () => { state.newDealStep = Number(btn.dataset.step); render(); }; }); document.querySelectorAll('[data-stab]').forEach(btn => { btn.onclick = () => { state.settingsTab = btn.dataset.stab; render(); }; }); document.querySelectorAll('[data-uwtab]').forEach(btn => { btn.onclick = () => { state.uwTab = btn.dataset.uwtab; render(); }; }); document.querySelectorAll('[data-switch]').forEach(btn => { btn.onclick = () => { const k = btn.dataset.switch; state.notifications[k] = !state.notifications[k]; render(); }; }); document.querySelectorAll('[data-connect]').forEach(btn => { btn.onclick = () => { const k = btn.dataset.connect; state.integrations[k] = true; render(); }; }); document.querySelectorAll('[data-open]').forEach(btn => { btn.onclick = () => { state.page = 'newDeal'; state.newDealStep = 3; render(); }; }); document.querySelectorAll('[data-upload]').forEach(btn => { btn.onclick = () => { const input = document.getElementById(btn.dataset.upload); if (input) input.click(); }; }); const search = document.getElementById('dealSearch'); if (search) search.oninput = (e) => { state.dealSearch = e.target.value; render(); }; const topAction = document.getElementById('topAction'); if (topAction) topAction.onclick = () => { if (state.page === 'settings') alert('Settings saved'); else { state.page = 'newDeal'; state.newDealStep = 1; render(); } }; const seedBtn = document.getElementById('seedGrandMonarch'); if (seedBtn) seedBtn.onclick = () => { Object.assign(state.underwriting, { propertyName:'Grand Monarch Apartments', market:'Montgomery, TX', purchasePrice:6000000, marketCap:6.3, actualMonthlyRent:74750, units:72, avgUnitRent:1319, otherIncomeAnnual:1366, vacancyPct:10, opExAnnual:340000, closingCosts:150000, capex:0, reserves:142549, ltv:70, rate:6.75, amortYears:30, ioYears:1, holdYears:5, exitCap:6.0, refiCap:6.75, refiLtv:75, lenderReserves:0 }); state.newDealStep = 3; render(); }; document.querySelectorAll('[data-uw]').forEach(input => { input.onchange = (e) => { const k = input.dataset.uw; state.underwriting[k] = num(e.target.value); render(); }; }); document.querySelectorAll('[data-uw-text]').forEach(input => { input.onchange = (e) => { const k = input.dataset.uwText; state.underwriting[k] = e.target.value; render(); }; }); const proformaInput = document.getElementById('upload-proforma'); if (proformaInput) proformaInput.onchange = handleProformaUpload; const rentInput = document.getElementById('upload-rent'); if (rentInput) rentInput.onchange = handleRentUpload; const compsInput = document.getElementById('upload-comps'); if (compsInput) compsInput.onchange = () => { alert('Comp files attached. In a production build, this would run OCR / parsing and reset the market cap benchmark.'); }; }
+    function handleProformaUpload(e){ const file = e.target.files && e.target.files[0]; if (!file) return; const ext = file.name.split('.').pop().toLowerCase(); if (!['xlsx','xls','csv'].includes(ext)) { alert('Upload an XLSX, XLS, or CSV proforma for auto-mapping.'); return; } const reader = new FileReader(); reader.onload = evt => { try { if (ext === 'csv') { const text = String(evt.target.result); const rows = text.split(/\r?\n/).map(r => r.split(',')); seedFromRows(rows); } else { const wb = XLSX.read(evt.target.result, {type:'binary'}); const ws = wb.Sheets[wb.SheetNames[0]]; const rows = XLSX.utils.sheet_to_json(ws, {header:1}); seedFromRows(rows); } state.newDealStep = 3; render(); } catch (err) { console.error(err); alert('Could not read the proforma. The manual inputs are still available.'); } }; if (ext === 'csv') reader.readAsText(file); else reader.readAsBinaryString(file); }
+    function seedFromRows(rows){ const flat = rows.flat().map(v => String(v || '').trim()); const joined = flat.join(' | ').toLowerCase(); if (joined.includes('grand monarch')) state.underwriting.propertyName = 'Grand Monarch Apartments'; const numericValues = flat.map(v => num(v)).filter(v => v > 0); if (numericValues.length) { const maybePrice = numericValues.find(v => v >= 5000000 && v <= 15000000); if (maybePrice) state.underwriting.purchasePrice = maybePrice; } }
+    function handleRentUpload(e){ const file = e.target.files && e.target.files[0]; if (!file) return; const ext = file.name.split('.').pop().toLowerCase(); if (!['xlsx','xls','csv'].includes(ext)) { alert('Use CSV or Excel for the rent roll upload in this static prototype.'); return; } const reader = new FileReader(); reader.onload = evt => { try { let rows = []; if (ext === 'csv') rows = String(evt.target.result).split(/\r?\n/).map(r => r.split(',')); else { const wb = XLSX.read(evt.target.result, {type:'binary'}); const ws = wb.Sheets[wb.SheetNames[0]]; rows = XLSX.utils.sheet_to_json(ws, {header:1}); } const header = (rows[0] || []).map(v => String(v).toLowerCase()); let rentIdx = header.findIndex(h => h.includes('rent')); if (rentIdx < 0) rentIdx = 1; const total = rows.slice(1).reduce((sum,row) => sum + num(row[rentIdx]), 0); if (total > 0) state.underwriting.actualMonthlyRent = total; render(); } catch (err) { console.error(err); alert('Could not parse the rent roll.'); } }; if (ext === 'csv') reader.readAsText(file); else reader.readAsBinaryString(file); }
+    let scoreChartRef = null; let incomeChartRef = null;
+    function renderCharts(){ if (document.getElementById('scoreChart')) { const ctx = document.getElementById('scoreChart').getContext('2d'); if (scoreChartRef) scoreChartRef.destroy(); const s = dealScore(state.underwriting).score; scoreChartRef = new Chart(ctx,{ type:'doughnut', data:{ labels:['Score','Remaining'], datasets:[{ data:[s, Math.max(0,3-s)], backgroundColor:['#1f2d57','#e8edf5'], borderWidth:0, cutout:'72%' }] }, options:{ plugins:{ legend:{display:false}, tooltip:{enabled:false} } }, plugins:[{ id:'centerText', afterDraw(chart){ const c = dealScore(state.underwriting); const {ctx} = chart; ctx.save(); ctx.textAlign='center'; ctx.fillStyle='#253047'; ctx.font='700 32px Inter, sans-serif'; ctx.fillText(c.score.toFixed(1), chart.width/2, chart.height/2 - 6); ctx.fillStyle='#7a879d'; ctx.font='600 14px Inter, sans-serif'; ctx.fillText('out of 3.0', chart.width/2, chart.height/2 + 18); ctx.restore(); } }] }); }
+      if (document.getElementById('incomeChart')) { const ctx = document.getElementById('incomeChart').getContext('2d'); if (incomeChartRef) incomeChartRef.destroy(); incomeChartRef = new Chart(ctx,{ type:'bar', data:{ labels:['Rent + Other','OpEx','Debt Service','NOI'], datasets:[{ data:[ egi(state.underwriting), state.underwriting.opExAnnual, annualDebtService(state.underwriting), noi(state.underwriting) ], backgroundColor:['#1f2d57','#92a4c6','#d39a32','#67c16f'], borderRadius:10 }] }, options:{ scales:{ y:{ ticks:{ callback:(value)=> '$' + Number(value).toLocaleString() }, grid:{color:'#e9eef6'} }, x:{grid:{display:false}} }, plugins:{legend:{display:false}} } }); } }
+    render();
+  </script>
+</body>
+</html>
