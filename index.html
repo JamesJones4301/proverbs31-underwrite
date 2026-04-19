@@ -219,8 +219,13 @@
     };
 
     // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    let db;
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+    } catch (e) {
+      console.error("Firebase initialization failed", e);
+    }
 
     const state = {
       page: 'deals',
@@ -552,6 +557,7 @@ Date: ____________________`;
 
     // Firestore Functions
     async function saveDealToFirestore() {
+      if (!db) { alert("Firebase not initialized. Check console for errors."); return; }
       const dealData = {
         name: state.underwriting.propertyName || 'Untitled Deal',
         address: state.underwriting.propertyAddress || '',
@@ -579,6 +585,7 @@ Date: ____________________`;
     }
 
     async function loadDealsFromFirestore() {
+      if (!db) return;
       try {
         const snapshot = await db.collection('deals').orderBy('timestamp', 'desc').get();
         state.deals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
