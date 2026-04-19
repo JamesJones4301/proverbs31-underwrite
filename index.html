@@ -494,7 +494,31 @@ Date: ____________________`;
       document.querySelectorAll('[data-send-loi]').forEach(btn => { btn.onclick = () => { if (!state.loi.sendToEmail.trim()) { alert('Type the recipient email address before sending the LOI.'); return; } const preview = `To: ${state.loi.sendToEmail}\nCC: ${state.loi.ccEmail || 'None'}\nReply-To: ${state.loi.replyToEmail}\nSubject: ${state.loi.subject}\n\nThe LOI is ready for final review.`; alert(preview); }; });
       const proformaInput = document.getElementById('upload-proforma'); if (proformaInput) proformaInput.onchange = handleProformaUpload; const rentInput = document.getElementById('upload-rent'); if (rentInput) rentInput.onchange = handleRentUpload; const compsInput = document.getElementById('upload-comps'); if (compsInput) compsInput.onchange = () => { alert('Comp files attached. In a production build, this would run OCR / parsing and reset the market cap benchmark.'); }; }
     function handleProformaUpload(e){ const file = e.target.files && e.target.files[0]; if (!file) return; const ext = file.name.split('.').pop().toLowerCase(); if (!['xlsx','xls','csv'].includes(ext)) { alert('Upload an XLSX, XLS, or CSV proforma for auto-mapping.'); return; } const reader = new FileReader(); reader.onload = evt => { try { if (ext === 'csv') { const text = String(evt.target.result); const rows = text.split(/\r?\n/).map(r => r.split(',')); seedFromRows(rows); } else { const wb = XLSX.read(evt.target.result, {type:'binary'}); const ws = wb.Sheets[wb.SheetNames[0]]; const rows = XLSX.utils.sheet_to_json(ws, {header:1}); seedFromRows(rows); } state.newDealStep = 3; render(); } catch (err) { console.error(err); alert('Could not read the proforma. The manual inputs are still available.'); } }; if (ext === 'csv') reader.readAsText(file); else reader.readAsBinaryString(file); }
-    function seedFromRows(rows){ const flat = rows.flat().map(v => String(v || '').trim()); const joined = flat.join(' | ').toLowerCase(); if (joined.includes('grand monarch')) state.underwriting.propertyName = 'Grand Monarch Apartments'; const numericValues = flat.map(v => num(v)).filter(v => v > 0); if (numericValues.length) { const maybePrice = numericValues.find(v => v >= 5000000 && v <= 15000000); if (maybePrice) state.underwriting.purchasePrice = maybePrice; } }
+    function seedFromRows(rows){ 
+      const flat = rows.flat().map(v => String(v || '').trim()); 
+      const joined = flat.join(' | ').toLowerCase(); 
+      if (joined.includes('grand monarch')) state.underwriting.propertyName = 'Grand Monarch Apartments'; 
+      
+      // Look for specific keywords in rows to map data
+      rows.forEach(row => {
+        const rowStr = row.join(' | ').toLowerCase();
+        if (rowStr.includes('purchase price') || rowStr.includes('acquisition price')) {
+          const val = row.map(v => num(v)).find(v => v > 100000);
+          if (val) state.underwriting.purchasePrice = val;
+        }
+        if (rowStr.includes('units') || rowStr.includes('number of units')) {
+          const val = row.map(v => num(v)).find(v => v > 0 && v < 10000);
+          if (val) state.underwriting.units = val;
+        }
+      });
+
+      const numericValues = flat.map(v => num(v)).filter(v => v > 0); 
+      if (numericValues.length && !state.underwriting.purchasePrice) { 
+        const maybePrice = numericValues.find(v => v >= 500000 && v <= 50000000); 
+        if (maybePrice) state.underwriting.purchasePrice = maybePrice; 
+      } 
+      alert('File processed! Some fields may have been auto-filled.');
+    }
     function handleRentUpload(e){ const file = e.target.files && e.target.files[0]; if (!file) return; const ext = file.name.split('.').pop().toLowerCase(); if (!['xlsx','xls','csv'].includes(ext)) { alert('Use CSV or Excel for the rent roll upload in this static prototype.'); return; } const reader = new FileReader(); reader.onload = evt => { try { let rows = []; if (ext === 'csv') rows = String(evt.target.result).split(/\r?\n/).map(r => r.split(',')); else { const wb = XLSX.read(evt.target.result, {type:'binary'}); const ws = wb.Sheets[wb.SheetNames[0]]; rows = XLSX.utils.sheet_to_json(ws, {header:1}); } const header = (rows[0] || []).map(v => String(v).toLowerCase()); let rentIdx = header.findIndex(h => h.includes('rent')); if (rentIdx < 0) rentIdx = 1; const total = rows.slice(1).reduce((sum,row) => sum + num(row[rentIdx]), 0); if (total > 0) state.underwriting.actualMonthlyRent = total; render(); } catch (err) { console.error(err); alert('Could not parse the rent roll.'); } }; if (ext === 'csv') reader.readAsText(file); else reader.readAsBinaryString(file); }
     let scoreChartRef = null; let incomeChartRef = null;
     function renderCharts(){ if (document.getElementById('scoreChart')) { const ctx = document.getElementById('scoreChart').getContext('2d'); if (scoreChartRef) scoreChartRef.destroy(); const s = dealScore(state.underwriting).score; scoreChartRef = new Chart(ctx,{ type:'doughnut', data:{ labels:['Score','Remaining'], datasets:[{ data:[s, Math.max(0,3-s)], backgroundColor:['#1f2d57','#e8edf5'], borderWidth:0, cutout:'72%' }] }, options:{ plugins:{ legend:{display:false}, tooltip:{enabled:false} } }, plugins:[{ id:'centerText', afterDraw(chart){ const c = dealScore(state.underwriting); const {ctx} = chart; ctx.save(); ctx.textAlign='center'; ctx.fillStyle='#253047'; ctx.font='700 32px Inter, sans-serif'; ctx.fillText(c.score.toFixed(1), chart.width/2, chart.height/2 - 6); ctx.fillStyle='#7a879d'; ctx.font='600 14px Inter, sans-serif'; ctx.fillText('out of 3.0', chart.width/2, chart.height/2 + 18); ctx.restore(); } }] }); }
