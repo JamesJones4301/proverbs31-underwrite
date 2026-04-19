@@ -6,6 +6,8 @@
   <title>Proverbs31 Underwrite - Prototype</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.269/pdf.min.mjs" type="module"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -550,12 +552,45 @@ Date: ____________________`;
       } 
       alert('File processed! Some fields may have been auto-filled.');
     }
-    function handleRentUpload(e){ 
+    function seedFromText(text){
+      const lower = text.toLowerCase();
+      if (lower.includes('purchase price') || lower.includes('acquisition price')) {
+        const match = text.match(/(?:purchase price|acquisition price)[^\d]*([\d,.]+)/i);
+        if (match && match[1]) state.underwriting.purchasePrice = num(match[1]);
+      }
+      if (lower.includes('units') || lower.includes('number of units')) {
+        const match = text.match(/(?:units|number of units)[^\d]*(\d+)/i);
+        if (match && match[1]) state.underwriting.units = num(match[1]);
+      }
+      alert('PDF text extracted! Some fields may have been auto-filled.');
+      render();
+    }
+    async function handleRentUpload(e){ 
       const file = e.target.files && e.target.files[0]; 
       if (!file) return; 
       const ext = file.name.split('.').pop().toLowerCase(); 
       if (ext === 'pdf') {
-        alert('PDF parsing requires a backend OCR service. For this prototype, please use Excel or CSV for auto-mapping, or enter data manually.');
+        alert('Starting PDF text extraction... This may take a few moments.');
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.269/pdf.min.mjs');
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.269/pdf.worker.min.mjs';
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          let fullText = '';
+          for (let i = 1; i <= Math.min(pdf.numPages, 3); i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            fullText += textContent.items.map(item => item.str).join(' ') + ' ';
+          }
+          if (fullText.trim().length < 50) {
+            alert('PDF appears to be image-based. OCR is required for full extraction. For now, please enter data manually.');
+          } else {
+            seedFromText(fullText);
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Error processing PDF. Please try an Excel or CSV version.');
+        }
         return;
       }
       if (!['xlsx','xls','csv'].includes(ext)) { 
